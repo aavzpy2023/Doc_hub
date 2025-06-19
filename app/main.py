@@ -3,6 +3,8 @@ from fastapi import FastAPI, HTTPException, Body
 from fastapi.responses import HTMLResponse
 from pathlib import Path # Usaremos pathlib para un manejo de rutas más seguro y moderno
 from fastapi.responses import FileResponse
+from .db.database import engine, Base
+from .db import models # Asegúrate de importar tus modelos
 import tempfile
 import os
 import subprocess
@@ -10,6 +12,10 @@ import yaml # Necesitaremos PyYAML para generar el mkdocs.yml
 
 # --- Configuración ---
 DOCS_DIRECTORY = Path("/docs_source")
+
+# Esta línea creará las tablas (User, Comment, etc.) en la base de datos
+# PostgreSQL la primera vez que la aplicación se inicie.
+Base.metadata.create_all(bind=engine)
 
 # --- Aplicación FastAPI ---
 app = FastAPI()
