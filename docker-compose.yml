@@ -2,8 +2,7 @@
 services:
   # Servicio de la aplicación de edición FastAPI
   app:
-    context: . # El contexto de construcción es la raíz del proyecto
-    dockerfile: app/Dockerfile # Especificamos dónde está el Dockerfile
+    build: .
     # 'depends_on' asegura que el contenedor de la base de datos 'db'
     # se inicie ANTES que el contenedor de la aplicación.
     depends_on:
