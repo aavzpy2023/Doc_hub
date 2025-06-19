@@ -1,49 +1,33 @@
-# /docker-compose.yml
+# /docker-compose.yml (VERSIÓN CORREGIDA Y FINAL)
+
+version: '3.8'
+
 services:
-  # Servicio de la aplicación de edición FastAPI
   app:
     build: .
-    # 'depends_on' asegura que el contenedor de la base de datos 'db'
-    # se inicie ANTES que el contenedor de la aplicación.
     depends_on:
       - db
     expose:
       - "8000"
     volumes:
+      - ./app:/code/app  # Mapea el código para el desarrollo con --reload
       - docs_source:/docs_source
       - docs_build:/docs_build
-    # 'environment' nos permite pasar variables de entorno al contenedor.
-    # Así es como nuestra aplicación FastAPI sabrá cómo conectarse a la base de datos.
     environment:
-      # La URL de conexión a la base de datos.
-      # 'postgres' es el nombre de usuario, 'password' la contraseña.
-      # 'db' es el nombre del servicio de la base de datos (Docker lo resuelve a la IP correcta).
-      # 'docuhub_db' es el nombre de la base de datos que se creará.
-      - DATABASE_URL=postgresql://postgres:password@db/docuhub_db
-      # También pasamos la clave secreta para los tokens JWT.
+      # AHORA LEE TODAS LAS VARIABLES DESDE EL ARCHIVO .env
+      - DATABASE_URL=${DATABASE_URL}
       - SECRET_KEY=${SECRET_KEY}
 
-  # --- NUEVO SERVICIO: PostgreSQL ---
   db:
-    # Usamos la imagen oficial de PostgreSQL. '14-alpine' es una versión robusta y ligera.
     image: postgres:14-alpine
     volumes:
-      # Este volumen es CRÍTICO. Mapea la carpeta de datos de PostgreSQL
-      # dentro del contenedor a un volumen nombrado en tu máquina host.
-      # Esto asegura que si el contenedor se detiene o se elimina,
-      # tus datos (usuarios, comentarios, etc.) NO SE PIERDAN.
       - postgres_data:/var/lib/postgresql/data/
     environment:
-      # Estas variables son leídas por la imagen de PostgreSQL al iniciar por primera vez.
-      # Crean la base de datos y el usuario con la contraseña especificada.
-      # DEBEN COINCIDIR con lo que pusiste en la DATABASE_URL de la app.
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=docuhub_db
-    # No necesitamos exponer los puertos de PostgreSQL al exterior, ya que la app
-    # se comunica con él a través de la red interna de Docker.
+      # AHORA LEE LAS CREDENCIALES DESDE EL ARCHIVO .env
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
 
-  # Servicio del Reverse Proxy Nginx
   nginx:
     image: nginx:1.21-alpine
     ports:
@@ -54,8 +38,6 @@ services:
     depends_on:
       - app
 
-# Definimos los volúmenes nombrados para la persistencia de datos.
-# Docker gestiona dónde se guardan estos volúmenes en tu máquina.
 volumes:
   docs_source:
   docs_build:
