@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocuHub - Editor</title>
+    
+    <!-- Librerías Externas para el Editor y el Parser de Markdown -->
+    <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css">
+    <script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <style>
+        /* Estilos para la interfaz principal */
+        body, html { margin: 0; padding: 0; font-family: sans-serif; height: 100vh; overflow: hidden; }
+        .app-layout { display: flex; height: 100%; }
+        .sidebar { width: 300px; border-right: 1px solid #ddd; background: #f8f9fa; display: flex; flex-direction: column; }
+        .sidebar-header { padding: 15px; border-bottom: 1px solid #ddd; }
+        .sidebar-header h2 { margin: 0; }
+        .file-tree { flex-grow: 1; overflow-y: auto; padding: 10px; }
+        .file-tree ul { list-style: none; padding-left: 15px; }
+        .file-tree li { padding: 4px 0; cursor: pointer; }
+        .file-tree .file:hover { background: #e9ecef; }
+        .file-tree .file.active { background: #007bff; color: white; font-weight: bold; }
+        .main-content { flex-grow: 1; display: flex; flex-direction: column; }
+        .editor-area { flex-grow: 1; display: flex; }
+        .editor-pane, .preview-pane { width: 50%; padding: 15px; box-sizing: border-box; overflow-y: auto; }
+        .editor-pane { border-right: 1px solid #ddd; }
+        .preview-pane { background: #fff; }
+        .editor-actions { padding: 10px; border-top: 1px solid #ddd; text-align: right; background: #f8f9fa; }
+        button { padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; }
+        #save-btn { background-color: #28a745; color: white; }
+        #save-btn:disabled { background-color: #6c757d; }
+        #publish-btn { background-color: #007bff; color: white; margin-left: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="app-layout">
+        <!-- Panel Izquierdo: Árbol de Documentos -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>Documentación</h2>
+            </div>
+            <div id="file-tree" class="file-tree">
+                <p>Cargando...</p>
+            </div>
+        </aside>
+
+        <!-- Panel Derecho: Editor y Vista Previa -->
+        <main class="main-content">
+            <div class="editor-area">
+                <div class="editor-pane">
+                    <textarea id="markdown-editor"></textarea>
+                </div>
+                <div class="preview-pane" id="preview">
+                    <p>Seleccione un archivo para ver la vista previa.</p>
+                </div>
+            </div>
+            <div class="editor-actions">
+                <span id="status-message" style="margin-right: 20px;"></span>
+                <button id="save-btn" disabled>Guardar</button>
+                <button id="publish-btn">Publicar Sitio</button>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Lógica de la aplicación del editor
+        const token = localStorage.getItem('docuhub_token');
+
+        // Redirigir a login si no hay token
+        if (!token) {
+            window.location.href = '/login';
+        }
+
+        const fileTreeEl = document.getElementById('file-tree');
+        const previewEl = document.getElementById('preview');
+        const saveBtn = document.getElementById('save-btn');
+        const publishBtn = document.getElementById('publish-btn');
+        const statusEl = document.getElementById('status-message');
+
+        let currentFilePath = null;
+        let easyMDE;
+
+        // Función para renderizar el árbol de archivos de forma recursiva
+        function renderTree(nodes, container) {
+            const ul = document.createElement('ul');
+            nodes.forEach(node => {
+                const li = document.createElement('li');
+                if (node.type === 'directory') {
+                    li.innerHTML = `<strong>📁 ${node.name}</strong>`;
+                    if (node.children && node.children.length > 0) {
+                        renderTree(node.children, li);
+                    }
+                } else {
+                    li.textContent = `📄 ${node.name}`;
+                    li.classList.add('file');
+                    li.dataset.path = node.path;
+                }
+                ul.appendChild(li);
+            });
+            container.appendChild(ul);
+        }
+
+        // Cargar el árbol de archivos
+        async function loadFileTree() {
+            const response = await fetch('/api/v1/documents/tree', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const treeData = await response.json();
+                fileTreeEl.innerHTML = '';
+                renderTree(treeData, fileTreeEl);
+            } else {
+                fileTreeEl.innerHTML = '<p>Error al cargar.</p>';
+            }
+        }
+
+        // Cargar contenido de un archivo
+        async function loadFileContent(path) {
+            currentFilePath = path;
+            const response = await fetch(`/api/v1/documents/content/${path}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+            easyMDE.value(data.content);
+            updatePreview(data.content);
+            saveBtn.disabled = false;
+        }
+
+        // Actualizar la vista previa
+        function updatePreview(value) {
+            previewEl.innerHTML = marked.parse(value);
+        }
+
+        // Guardar cambios
+        saveBtn.addEventListener('click', async () => {
+            if (!currentFilePath) return;
+            statusEl.textContent = 'Guardando...';
+            const response = await fetch(`/api/v1/documents/content/${currentFilePath}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ content: easyMDE.value() })
+            });
+            statusEl.textContent = response.ok ? '¡Guardado!' : 'Error al guardar.';
+            setTimeout(() => statusEl.textContent = '', 3000);
+        });
+
+        // Publicar el sitio
+        publishBtn.addEventListener('click', async () => {
+            statusEl.textContent = 'Publicando sitio...';
+            const response = await fetch('/api/v1/documents/publish', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            statusEl.textContent = response.ok ? '¡Sitio publicado con éxito!' : 'Error al publicar.';
+            setTimeout(() => statusEl.textContent = '', 3000);
+        });
+
+        // Event listener para el árbol de archivos
+        fileTreeEl.addEventListener('click', (e) => {
+            if (e.target.classList.contains('file')) {
+                // Resaltar el archivo seleccionado
+                document.querySelectorAll('.file.active').forEach(el => el.classList.remove('active'));
+                e.target.classList.add('active');
+                loadFileContent(e.target.dataset.path);
+            }
+        });
+        
+        // Inicializar el editor
+        easyMDE = new EasyMDE({
+            element: document.getElementById('markdown-editor'),
+            spellChecker: false,
+        });
+
+        easyMDE.codemirror.on("change", () => {
+            updatePreview(easyMDE.value());
+        });
+
+        // Carga inicial
+        loadFileTree();
+    </script>
+</body>
+</html>

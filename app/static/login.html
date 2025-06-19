@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocuHub - Iniciar Sesión</title>
+    <style>
+        /* Estilos básicos para centrar el formulario */
+        body, html { height: 100%; margin: 0; font-family: sans-serif; background: #f4f4f4; }
+        .container { display: flex; justify-content: center; align-items: center; height: 100%; }
+        .login-box { padding: 40px; background: white; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 320px; text-align: center; }
+        h1 { margin-bottom: 24px; color: #333; }
+        input { width: 100%; padding: 12px; margin-bottom: 16px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #0056b3; }
+        .error { color: #d9534f; margin-top: 10px; height: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="login-box">
+            <h1>DocuHub</h1>
+            <form id="login-form">
+                <input type="text" id="username" name="username" placeholder="Nombre de usuario" required>
+                <input type="password" id="password" name="password" placeholder="Contraseña" required>
+                <button type="submit">Iniciar Sesión</button>
+            </form>
+            <p id="error-message" class="error"></p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = e.target.username.value;
+            const password = e.target.password.value;
+            const errorElement = document.getElementById('error-message');
+            errorElement.textContent = '';
+
+            // Los datos deben enviarse en un formato de formulario para OAuth2PasswordRequestForm
+            const formData = new URLSearchParams();
+            formData.append('username', username);
+            formData.append('password', password);
+
+            try {
+                const response = await fetch('/api/v1/login/access-token', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData,
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    // Guardamos el token en el almacenamiento local del navegador
+                    localStorage.setItem('docuhub_token', data.access_token);
+                    // Redirigimos al editor principal
+                    window.location.href = '/editor';
+                } else {
+                    errorElement.textContent = 'Usuario o contraseña incorrectos.';
+                }
+            } catch (error) {
+                console.error('Error de login:', error);
+                errorElement.textContent = 'Error de conexión con el servidor.';
+            }
+        });
+    </script>
+</body>
+</html>
