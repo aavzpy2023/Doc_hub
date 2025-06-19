@@ -21,3 +21,6 @@ passlib[bcrypt]
 mkdocs
 mkdocs-material
 PyYAML
+
+# Utilidades (Git)
+GitPython
