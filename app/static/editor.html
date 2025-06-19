@@ -65,124 +65,131 @@
         </main>
     </div>
 
-    <script>
-        // Lógica de la aplicación del editor
-        const token = localStorage.getItem('docuhub_token');
+    <!-- /app/static/editor.html (Sección <script> corregida) -->
 
-        // Redirigir a login si no hay token
-        if (!token) {
-            window.location.href = '/login';
-        }
+<script>
+    // 1. Obtener el token del almacenamiento local
+    const token = localStorage.getItem('docuhub_token');
 
-        const fileTreeEl = document.getElementById('file-tree');
-        const previewEl = document.getElementById('preview');
-        const saveBtn = document.getElementById('save-btn');
-        const publishBtn = document.getElementById('publish-btn');
-        const statusEl = document.getElementById('status-message');
+    // 2. Si no hay token, redirigir inmediatamente a la página de login
+    if (!token) {
+        window.location.href = '/login';
+    }
 
-        let currentFilePath = null;
-        let easyMDE;
+    // 3. Crear un objeto de cabeceras reutilizable que incluya el token
+    const authHeaders = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}` // <-- La cabecera clave
+    };
 
-        // Función para renderizar el árbol de archivos de forma recursiva
-        function renderTree(nodes, container) {
-            const ul = document.createElement('ul');
-            nodes.forEach(node => {
-                const li = document.createElement('li');
-                if (node.type === 'directory') {
-                    li.innerHTML = `<strong>📁 ${node.name}</strong>`;
-                    if (node.children && node.children.length > 0) {
-                        renderTree(node.children, li);
-                    }
-                } else {
-                    li.textContent = `📄 ${node.name}`;
-                    li.classList.add('file');
-                    li.dataset.path = node.path;
+    // Referencias al DOM (sin cambios)
+    const fileTreeEl = document.getElementById('file-tree');
+    const previewEl = document.getElementById('preview');
+    const saveBtn = document.getElementById('save-btn');
+    const publishBtn = document.getElementById('publish-btn');
+    const statusEl = document.getElementById('status-message');
+
+    let currentFilePath = null;
+    let easyMDE;
+
+    // --- Lógica de la API (ACTUALIZADA) ---
+
+    async function loadFileTree() {
+        try {
+            // AHORA USAMOS LAS CABECERAS DE AUTENTICACIÓN
+            const response = await fetch('/api/v1/documents/tree', { headers: authHeaders });
+            if (!response.ok) {
+                // Si el token es inválido o expiró (error 401/403)
+                if (response.status === 401 || response.status === 403) {
+                    window.location.href = '/login'; // Forzar re-login
                 }
-                ul.appendChild(li);
-            });
-            container.appendChild(ul);
+                throw new Error('Respuesta de red no fue ok.');
+            }
+            const treeData = await response.json();
+            fileTreeEl.innerHTML = '';
+            renderTree(treeData, fileTreeEl);
+        } catch (error) {
+            console.error("Error en loadFileTree:", error);
+            fileTreeEl.innerHTML = '<p>Error al cargar.</p>';
         }
+    }
 
-        // Cargar el árbol de archivos
-        async function loadFileTree() {
-            const response = await fetch('/api/v1/documents/tree', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (response.ok) {
-                const treeData = await response.json();
-                fileTreeEl.innerHTML = '';
-                renderTree(treeData, fileTreeEl);
+    async function loadFileContent(path) {
+        currentFilePath = path;
+        const response = await fetch(`/api/v1/documents/content/${path}`, { headers: authHeaders });
+        const data = await response.json();
+        easyMDE.value(data.content);
+        updatePreview(data.content);
+        saveBtn.disabled = false;
+    }
+
+    saveBtn.addEventListener('click', async () => {
+        if (!currentFilePath) return;
+        statusEl.textContent = 'Guardando...';
+        const response = await fetch(`/api/v1/documents/content/${currentFilePath}`, {
+            method: 'POST',
+            // Añadimos las cabeceras a la petición POST
+            headers: authHeaders,
+            body: JSON.stringify({ content: easyMDE.value() })
+        });
+        statusEl.textContent = response.ok ? '¡Guardado!' : 'Error al guardar.';
+        setTimeout(() => statusEl.textContent = '', 3000);
+    });
+
+    publishBtn.addEventListener('click', async () => {
+        statusEl.textContent = 'Publicando sitio...';
+        const response = await fetch('/api/v1/documents/publish', {
+            method: 'POST',
+            // Añadimos las cabeceras a la petición POST
+            headers: authHeaders
+        });
+        statusEl.textContent = response.ok ? '¡Sitio publicado con éxito!' : 'Error al publicar.';
+        setTimeout(() => statusEl.textContent = '', 3000);
+    });
+
+    // --- El resto de las funciones (renderTree, updatePreview, etc.) se mantienen igual ---
+    function renderTree(nodes, container) {
+        const ul = document.createElement('ul');
+        nodes.forEach(node => {
+            const li = document.createElement('li');
+            if (node.type === 'directory') {
+                li.innerHTML = `<strong>📁 ${node.name}</strong>`;
+                if (node.children && node.children.length > 0) {
+                    renderTree(node.children, li);
+                }
             } else {
-                fileTreeEl.innerHTML = '<p>Error al cargar.</p>';
+                li.textContent = `📄 ${node.name}`;
+                li.classList.add('file');
+                li.dataset.path = node.path;
             }
+            ul.appendChild(li);
+        });
+        container.appendChild(ul);
+    }
+    
+    function updatePreview(value) {
+        previewEl.innerHTML = marked.parse(value);
+    }
+
+    fileTreeEl.addEventListener('click', (e) => {
+        if (e.target.classList.contains('file')) {
+            document.querySelectorAll('.file.active').forEach(el => el.classList.remove('active'));
+            e.target.classList.add('active');
+            loadFileContent(e.target.dataset.path);
         }
+    });
+    
+    easyMDE = new EasyMDE({
+        element: document.getElementById('markdown-editor'),
+        spellChecker: false,
+    });
 
-        // Cargar contenido de un archivo
-        async function loadFileContent(path) {
-            currentFilePath = path;
-            const response = await fetch(`/api/v1/documents/content/${path}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await response.json();
-            easyMDE.value(data.content);
-            updatePreview(data.content);
-            saveBtn.disabled = false;
-        }
+    easyMDE.codemirror.on("change", () => {
+        updatePreview(easyMDE.value());
+    });
 
-        // Actualizar la vista previa
-        function updatePreview(value) {
-            previewEl.innerHTML = marked.parse(value);
-        }
-
-        // Guardar cambios
-        saveBtn.addEventListener('click', async () => {
-            if (!currentFilePath) return;
-            statusEl.textContent = 'Guardando...';
-            const response = await fetch(`/api/v1/documents/content/${currentFilePath}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ content: easyMDE.value() })
-            });
-            statusEl.textContent = response.ok ? '¡Guardado!' : 'Error al guardar.';
-            setTimeout(() => statusEl.textContent = '', 3000);
-        });
-
-        // Publicar el sitio
-        publishBtn.addEventListener('click', async () => {
-            statusEl.textContent = 'Publicando sitio...';
-            const response = await fetch('/api/v1/documents/publish', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            statusEl.textContent = response.ok ? '¡Sitio publicado con éxito!' : 'Error al publicar.';
-            setTimeout(() => statusEl.textContent = '', 3000);
-        });
-
-        // Event listener para el árbol de archivos
-        fileTreeEl.addEventListener('click', (e) => {
-            if (e.target.classList.contains('file')) {
-                // Resaltar el archivo seleccionado
-                document.querySelectorAll('.file.active').forEach(el => el.classList.remove('active'));
-                e.target.classList.add('active');
-                loadFileContent(e.target.dataset.path);
-            }
-        });
-        
-        // Inicializar el editor
-        easyMDE = new EasyMDE({
-            element: document.getElementById('markdown-editor'),
-            spellChecker: false,
-        });
-
-        easyMDE.codemirror.on("change", () => {
-            updatePreview(easyMDE.value());
-        });
-
-        // Carga inicial
-        loadFileTree();
-    </script>
+    // Carga inicial
+    loadFileTree();
+</script>
 </body>
 </html>
