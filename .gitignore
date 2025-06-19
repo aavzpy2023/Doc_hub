@@ -1,0 +1,51 @@
+# /.gitignore
+
+# --- Entornos Virtuales de Python ---
+# Ignorar la carpeta del entorno virtual si la creas localmente
+venv/
+env/
+.venv/
+.env/
+*/.virtualenvs/
+
+# --- Archivos de Caché y Compilados de Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# --- Archivos de Configuración y Secretos ---
+# ¡IMPORTANTE! Nunca subir el archivo de variables de entorno
+.env
+.env.*
+!.env.example  # A veces se incluye un archivo de ejemplo sin secretos
+
+# --- Archivos del IDE y del Sistema Operativo ---
+.vscode/
+.idea/
+.DS_Store
+*.swo
+*.swp
+
+# --- Bases de Datos Locales ---
+# Si usaras SQLite para pruebas locales, lo ignorarías
+# *.sqlite3
+# *.db
+
+# --- Archivos de Dependencias y Construcción ---
+# La carpeta de dependencias que instala pip
+# No es necesario si se usa Docker, pero es buena práctica
+# /site-packages/
+# /lib/
+# /include/
+
+# --- Archivos generados por Test ---
+.pytest_cache/
+.coverage
+
+# --- Volúmenes de Docker ---
+# Es buena práctica ignorar los datos persistentes si se mapean localmente
+# En nuestro caso, los volúmenes son nombrados y gestionados por Docker,
+# por lo que no crearán carpetas en el proyecto. Pero si decidieras
+# mapear a una carpeta local (ej. './postgres_data:/...'), la añadirías aquí.
+# postgres_data/

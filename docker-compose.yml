@@ -21,7 +21,7 @@ services:
       # 'docuhub_db' es el nombre de la base de datos que se creará.
       - DATABASE_URL=postgresql://postgres:password@db/docuhub_db
       # También pasamos la clave secreta para los tokens JWT.
-      - SECRET_KEY=un_secreto_muy_dificil_de_adivinar_y_que_deberia_cambiar
+      - SECRET_KEY=${SECRET_KEY}
 
   # --- NUEVO SERVICIO: PostgreSQL ---
   db:
