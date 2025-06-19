@@ -29,7 +29,7 @@ async def create_initial_user():
         user_in = schemas.UserCreate(
             username="admin",
             email="admin@example.com",  # Puedes cambiar este email
-            password="admin",
+            password="David*2017",
             is_active=True
         )
         
