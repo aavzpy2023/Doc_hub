@@ -17,7 +17,7 @@ class UserBase(BaseModel):
 # --- Esquema para la CREACIÓN de un usuario (recibido por la API) ---
 # Hereda de UserBase y añade el campo de la contraseña.
 class UserCreate(UserBase):
-    password: str = Field(..., min_length=8, description="Contraseña del usuario")
+    password: str = Field(..., min_length=5, description="Contraseña del usuario")
 
 # --- Esquema para la ACTUALIZACIÓN de un usuario (recibido por la API) ---
 # Todos los campos son opcionales.
