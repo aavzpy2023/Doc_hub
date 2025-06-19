@@ -2,30 +2,61 @@
 services:
   # Servicio de la aplicación de edición FastAPI
   app:
-    build: ./app # Construye la imagen desde la carpeta 'app'
+    build: ./app
+    # 'depends_on' asegura que el contenedor de la base de datos 'db'
+    # se inicie ANTES que el contenedor de la aplicación.
+    depends_on:
+      - db
     expose:
-      - "8000" # Expone el puerto solo a otros servicios del compose (Nginx)
+      - "8000"
     volumes:
-      # Volumen para los archivos Markdown (fuente de verdad)
       - docs_source:/docs_source
-      # Volumen donde MkDocs construirá el sitio HTML
       - docs_build:/docs_build
-    # El comando se mantiene igual, pero lo ponemos en el Dockerfile de la app
-    # command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    # 'environment' nos permite pasar variables de entorno al contenedor.
+    # Así es como nuestra aplicación FastAPI sabrá cómo conectarse a la base de datos.
+    environment:
+      # La URL de conexión a la base de datos.
+      # 'postgres' es el nombre de usuario, 'password' la contraseña.
+      # 'db' es el nombre del servicio de la base de datos (Docker lo resuelve a la IP correcta).
+      # 'docuhub_db' es el nombre de la base de datos que se creará.
+      - DATABASE_URL=postgresql://postgres:password@db/docuhub_db
+      # También pasamos la clave secreta para los tokens JWT.
+      - SECRET_KEY=un_secreto_muy_dificil_de_adivinar_y_que_deberia_cambiar
+
+  # --- NUEVO SERVICIO: PostgreSQL ---
+  db:
+    # Usamos la imagen oficial de PostgreSQL. '14-alpine' es una versión robusta y ligera.
+    image: postgres:14-alpine
+    volumes:
+      # Este volumen es CRÍTICO. Mapea la carpeta de datos de PostgreSQL
+      # dentro del contenedor a un volumen nombrado en tu máquina host.
+      # Esto asegura que si el contenedor se detiene o se elimina,
+      # tus datos (usuarios, comentarios, etc.) NO SE PIERDAN.
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      # Estas variables son leídas por la imagen de PostgreSQL al iniciar por primera vez.
+      # Crean la base de datos y el usuario con la contraseña especificada.
+      # DEBEN COINCIDIR con lo que pusiste en la DATABASE_URL de la app.
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=docuhub_db
+    # No necesitamos exponer los puertos de PostgreSQL al exterior, ya que la app
+    # se comunica con él a través de la red interna de Docker.
 
   # Servicio del Reverse Proxy Nginx
   nginx:
     image: nginx:1.21-alpine
     ports:
-      - "8080:80" # Expone el puerto 80 de Nginx al puerto 8080 de tu máquina
+      - "8080:80"
     volumes:
-      # Monta nuestro archivo de configuración personalizado
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
-      # Monta el volumen del sitio construido para que Nginx pueda servirlo
       - docs_build:/var/www/html
     depends_on:
-      - app # Nginx no iniciará hasta que la app esté lista
+      - app
 
+# Definimos los volúmenes nombrados para la persistencia de datos.
+# Docker gestiona dónde se guardan estos volúmenes en tu máquina.
 volumes:
   docs_source:
   docs_build:
+  postgres_data:
