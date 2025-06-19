@@ -1,14 +1,15 @@
 # /app/requirements.txt
 
-# Framework principal
 fastapi
 uvicorn
 
 # Base de Datos y ORM
 sqlalchemy
-psycopg2-binary  # Driver de Python para PostgreSQL
-alembic          # Para migraciones de base de datos (recomendado)
+psycopg2-binary
 
+# Configuración y Validación
+# pydantic[email] instalará pydantic junto con la dependencia 'email-validator'
+pydantic[email] 
 pydantic-settings
 
 # Seguridad y Autenticación
@@ -18,7 +19,4 @@ passlib[bcrypt]
 # Documentación
 mkdocs
 mkdocs-material
-PyYAML           # Para generar el mkdocs.yml
-
-# Pandoc y PDF (wrapper para Python si es necesario)
-# pypandoc
+PyYAML
