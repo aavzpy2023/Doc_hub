@@ -4,9 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 
-from app.api import dependencies
-from app.db import models, schemas
-from app.db.database import get_db
+from ..api import dependencies
+from ..db import models, schemas
+from ..db.database import get_db
 from ..services import user_service # Asumimos que este servicio existe
 
 router = APIRouter()

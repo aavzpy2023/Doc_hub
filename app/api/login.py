@@ -5,10 +5,10 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import timedelta
 
-from app.core import security
-from app.core.config import settings
-from app.db import schemas
-from app.db.database import get_db
+from ..core import security
+from ..core.config import settings
+from ..db import schemas
+from ..db.database import get_db
 from ..services import user_service # Asumimos que este servicio existe
 
 router = APIRouter()

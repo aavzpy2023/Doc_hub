@@ -10,10 +10,10 @@ import yaml
 from pathlib import Path
 
 # Importaciones de nuestra aplicación
-from app.api import dependencies
-from app.db import models
-from app.core.config import settings
-from app.services import document_service # Usaremos el servicio para la lógica de Git
+from ..api import dependencies
+from ..db import models
+from ..core.config import settings
+from ..services import document_service # Usaremos el servicio para la lógica de Git
 
 # Creamos un nuevo router. Todos los endpoints definidos aquí
 # serán añadidos a la aplicación principal.
