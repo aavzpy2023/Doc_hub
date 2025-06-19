@@ -10,7 +10,7 @@ services:
       - "8000"
     volumes:
       - ./app:/code/app
-      - docs_source:/docs_source
+      - ./docs:/docs_source
       - docs_build:/docs_build
     environment:
       - DATABASE_URL=${DATABASE_URL}
@@ -44,6 +44,5 @@ services:
       - app
 
 volumes:
-  docs_source:
   docs_build:
   postgres_data:
