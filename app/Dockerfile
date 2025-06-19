@@ -28,4 +28,4 @@ COPY . .
 # Le dice a Uvicorn que sirva la aplicación 'app' desde el archivo 'main.py'.
 # --host 0.0.0.0 es crucial para que la app sea accesible desde fuera del contenedor.
 # --port 8000 es el puerto que la aplicación escuchará dentro del contenedor.
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
