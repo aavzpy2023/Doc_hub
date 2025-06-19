@@ -1,5 +1,22 @@
+# /app/requirements.txt
+
+# Framework principal
 fastapi
 uvicorn
+
+# Base de Datos y ORM
+sqlalchemy
+psycopg2-binary  # Driver de Python para PostgreSQL
+alembic          # Para migraciones de base de datos (recomendado)
+
+# Seguridad y Autenticación
+python-jose[cryptography]
+passlib[bcrypt]
+
+# Documentación
 mkdocs
 mkdocs-material
-PyYAML
+PyYAML           # Para generar el mkdocs.yml
+
+# Pandoc y PDF (wrapper para Python si es necesario)
+# pypandoc
