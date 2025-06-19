@@ -1,68 +1,109 @@
-# /main.py
-from fastapi import FastAPI, HTTPException, Request, Body
+# /app/main.py
+from fastapi import FastAPI, HTTPException, Body
 from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
 import os
+import subprocess # Para ejecutar comandos del sistema
 
 # --- Configuración ---
-MANUAL_FILE = "manual.md"
+# Ahora los documentos estarán en una carpeta montada
+DOCS_DIRECTORY = "/docs_source" 
 
 # --- Aplicación FastAPI ---
 app = FastAPI()
 
-# Montar el directorio 'static' para servir CSS y JS
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
+# No necesitamos servir estáticos desde FastAPI, Nginx lo hará.
+# Pero dejamos el endpoint que sirve el HTML del editor.
 
 @app.get("/", response_class=HTMLResponse)
 async def get_editor_page():
-    """Sirve la página principal del editor (index.html)."""
-    # Para este proyecto simple, vamos a construir el HTML aquí mismo.
-    # En un proyecto más grande, esto estaría en un archivo /static/index.html
+    # El HTML se mantiene igual, pero lo separamos para claridad
+    # En un proyecto real, esto estaría en un archivo /app/static/editor.html
     html_content = """
     <!DOCTYPE html>
     <html lang="es">
     <head>
         <meta charset="UTF-8">
-        <title>Editor de Manual</title>
-        <link rel="stylesheet" href="/static/style.css">
-        <!-- Importar marked.js desde un CDN para simplicidad -->
-        <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+        <title>DocuHub - Editor</title>
+        <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css">
+        <script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
+        <style>/* Estilos CSS aquí o en un archivo externo */</style>
     </head>
     <body>
-        <header>
-            <h1>Editor de Manual</h1>
-            <div>
-                <span id="status-message"></span>
-                <button id="save-button">Guardar Cambios</button>
-            </div>
-        </header>
-        <div class="editor-container">
-            <textarea id="editor" spellcheck="false"></textarea>
-            <div id="preview"></div>
-        </div>
-        <script src="/static/script.js"></script>
+        <h1>DocuHub Editor</h1>
+        <div id="file-list"></div>
+        <textarea id="markdown-editor"></textarea>
+        <button id="save-button">Guardar</button>
+        <button id="publish-button">Publicar Sitio</button>
+        <div id="status"></div>
+        <script>
+            // Lógica JS aquí o en un archivo externo
+            // El JS deberá ser actualizado para listar archivos y tener el botón de publicar
+        </script>
     </body>
     </html>
     """
     return HTMLResponse(content=html_content)
 
-@app.get("/api/manual")
-async def get_manual():
-    """API para leer el contenido del archivo manual.md."""
+@app.get("/api/documents")
+async def list_documents():
+    """API para listar los archivos .md disponibles."""
     try:
-        with open(MANUAL_FILE, "r", encoding="utf-8") as f:
-            return {"content": f.read()}
+        files = [f for f in os.listdir(DOCS_DIRECTORY) if f.endswith('.md')]
+        return {"documents": files}
     except FileNotFoundError:
-        raise HTTPException(status_code=404, detail="El archivo del manual no se encontró.")
+        return {"documents": []}
 
-@app.post("/api/manual")
-async def save_manual(payload: dict = Body(...)):
-    """API para guardar el nuevo contenido en manual.md."""
+@app.get("/api/documents/{filename}")
+async def get_document(filename: str):
+    """API para leer el contenido de un archivo .md."""
+    filepath = os.path.join(DOCS_DIRECTORY, filename)
+    if not os.path.exists(filepath):
+        raise HTTPException(status_code=404, detail="Archivo no encontrado")
+    with open(filepath, "r", encoding="utf-8") as f:
+        return {"content": f.read()}
+
+@app.post("/api/documents/{filename}")
+async def save_document(filename: str, payload: dict = Body(...)):
+    """API para guardar contenido en un archivo .md."""
     content = payload.get("content", "")
+    filepath = os.path.join(DOCS_DIRECTORY, filename)
+    with open(filepath, "w", encoding="utf-8") as f:
+        f.write(content)
+    return {"message": "Documento guardado."}
+
+# --- NUEVO ENDPOINT ---
+@app.post("/api/publish")
+async def publish_site():
+    """
+    Ejecuta el comando 'mkdocs build' para generar el sitio estático.
+    """
     try:
-        with open(MANUAL_FILE, "w", encoding="utf-8") as f:
-            f.write(content)
-        return {"message": "Manual guardado con éxito."}
+        # Creamos un archivo de configuración básico para MkDocs al vuelo
+        mkdocs_config = f"""
+        site_name: Documentación de Proyectos
+        theme:
+          name: material
+        nav:
+        """
+        # Añadir archivos a la navegación
+        files = sorted([f for f in os.listdir(DOCS_DIRECTORY) if f.endswith('.md')])
+        for f in files:
+            mkdocs_config += f"  - '{f.replace('_', ' ').replace('.md', '')}': '{f}'\n"
+        
+        with open(os.path.join(DOCS_DIRECTORY, "mkdocs.yml"), "w") as f:
+            f.write(mkdocs_config)
+
+        # Ejecutamos el comando de build
+        # MkDocs generará el sitio en la carpeta /docs_build/site
+        result = subprocess.run(
+            ["mkdocs", "build", "-f", "mkdocs.yml", "-d", "/docs_build/site"],
+            cwd=DOCS_DIRECTORY,
+            capture_output=True,
+            text=True
+        )
+        if result.returncode != 0:
+            raise RuntimeError(f"Error en MkDocs: {result.stderr}")
+        
+        return {"message": "Sitio publicado con éxito."}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al guardar el archivo: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
