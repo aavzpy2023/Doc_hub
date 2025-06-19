@@ -34,7 +34,7 @@ class User(UserBase):
     class Config:
         # Permite a Pydantic mapear automáticamente los datos desde un
         # objeto de SQLAlchemy a este schema.
-        orm_mode = True
+        from_attributes = True
 
 
 # ==============================================================================
