@@ -7,7 +7,7 @@ from typing import List
 from app.api import dependencies
 from app.db import models, schemas
 from app.db.database import get_db
-from app.services import user_service # Asumimos que este servicio existe
+from ..services import user_service # Asumimos que este servicio existe
 
 router = APIRouter()
 

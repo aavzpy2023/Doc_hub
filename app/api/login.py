@@ -9,7 +9,7 @@ from app.core import security
 from app.core.config import settings
 from app.db import schemas
 from app.db.database import get_db
-from app.services import user_service # Asumimos que este servicio existe
+from ..services import user_service # Asumimos que este servicio existe
 
 router = APIRouter()
 
