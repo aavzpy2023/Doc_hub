@@ -9,6 +9,8 @@ sqlalchemy
 psycopg2-binary  # Driver de Python para PostgreSQL
 alembic          # Para migraciones de base de datos (recomendado)
 
+pydantic-settings
+
 # Seguridad y Autenticación
 python-jose[cryptography]
 passlib[bcrypt]
