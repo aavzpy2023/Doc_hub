@@ -1,20 +1,18 @@
-# /docker-compose.yml (VERSIÓN CORREGIDA Y FINAL)
-
-version: '3.8'
-
+# /docker-compose.yml (VERSIÓN FINAL Y ROBUSTA)
 services:
   app:
     build: .
+    # CAMBIO CLAVE: Ahora depende de que el servicio 'db' esté 'saludable'
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     expose:
       - "8000"
     volumes:
-      - ./app:/code/app  # Mapea el código para el desarrollo con --reload
+      - ./app:/code/app
       - docs_source:/docs_source
       - docs_build:/docs_build
     environment:
-      # AHORA LEE TODAS LAS VARIABLES DESDE EL ARCHIVO .env
       - DATABASE_URL=${DATABASE_URL}
       - SECRET_KEY=${SECRET_KEY}
 
@@ -23,10 +21,17 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     environment:
-      # AHORA LEE LAS CREDENCIALES DESDE EL ARCHIVO .env
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
+    # --- NUEVA SECCIÓN: HEALTHCHECK ---
+    healthcheck:
+      # Comando que Docker ejecutará para comprobar la salud del servicio.
+      # pg_isready es una utilidad de PostgreSQL que devuelve 0 si el servidor está listo.
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s    # Comprobar cada 5 segundos
+      timeout: 5s     # Esperar 5 segundos por una respuesta
+      retries: 5      # Intentarlo 5 veces antes de marcarlo como 'unhealthy'
 
   nginx:
     image: nginx:1.21-alpine
