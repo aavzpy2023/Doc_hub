@@ -81,6 +81,29 @@ class DocumentService:
             except git.GitCommandError:
                 pass # Puede fallar si no había nada que resetear
             return False
+    
+    def generate_mkdocs_nav(self) -> List[Dict[str, Any]]:
+        """
+        Genera la estructura de navegación jerárquica para el archivo mkdocs.yml.
+        """
+        def build_nav(current_path: Path):
+            nav_items = []
+            for item in sorted(current_path.iterdir()):
+                if item.name.startswith('.') or item.name == 'mkdocs.yml':
+                    continue
+                
+                relative_path = item.relative_to(self.docs_path).as_posix()
+                
+                if item.is_dir():
+                    dir_name = item.name.replace('_', ' ').title()
+                    children_nav = build_nav(item)
+                    if children_nav:
+                        nav_items.append({dir_name: children_nav})
+                elif item.is_file() and item.suffix == '.md':
+                    file_name = item.stem.replace('_', ' ').title()
+                    nav_items.append({file_name: relative_path})
+            return nav_items
+        return build_nav(self.docs_path)
 
 # Creamos una instancia única del servicio para que sea fácil de importar y usar
 document_service = DocumentService()

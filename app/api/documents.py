@@ -72,37 +72,35 @@ def save_document_content(
     return {"message": "Documento guardado y versionado con éxito."}
 
 
+# /app/api/documents.py (Fragmento del endpoint /publish)
+
 @router.post("/publish")
 def publish_site(
     current_user: models.User = Depends(dependencies.get_current_admin_user),
 ):
     """
     Ejecuta 'mkdocs build' para generar el sitio estático.
-    Solo accesible para usuarios administradores.
     """
     try:
-        # Generación de navegación jerárquica para mkdocs.yml
+        # 1. Obtenemos la estructura de navegación desde el servicio
         nav_structure = document_service.generate_mkdocs_nav()
         
+        # 2. Creamos el diccionario de configuración
         mkdocs_config = {
             'site_name': 'Documentación de Proyectos DATAZUCAR',
             'theme': {
                 'name': 'material',
-                'features': [
-                    'navigation.tabs',
-                    'navigation.sections',
-                    'navigation.expand'
-                ]
+                'features': ['navigation.tabs', 'navigation.sections', 'navigation.expand']
             },
             'nav': nav_structure
         }
         
-        # Escribir el mkdocs.yml
+        # 3. Escribimos el archivo de configuración
         docs_path = Path(settings.DOCS_DIRECTORY)
         with open(docs_path / "mkdocs.yml", "w", encoding="utf-8") as f:
             yaml.dump(mkdocs_config, f, allow_unicode=True, default_flow_style=False)
 
-        # Ejecutar el comando de build
+        # 4. Ejecutamos el comando de build
         subprocess.run(
             ["mkdocs", "build", "-f", "mkdocs.yml", "-d", "/docs_build/site", "--clean"],
             cwd=docs_path.as_posix(),
