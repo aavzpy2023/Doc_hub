@@ -5,63 +5,183 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DocuHub - Iniciar Sesión</title>
     <style>
-        /* Estilos básicos para centrar el formulario */
-        body, html { height: 100%; margin: 0; font-family: sans-serif; background: #f4f4f4; }
-        .container { display: flex; justify-content: center; align-items: center; height: 100%; }
-        .login-box { padding: 40px; background: white; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 320px; text-align: center; }
-        h1 { margin-bottom: 24px; color: #333; }
-        input { width: 100%; padding: 12px; margin-bottom: 16px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
-        button:hover { background-color: #0056b3; }
-        .error { color: #d9534f; margin-top: 10px; height: 20px; }
+        /* ==========================================================================
+           1. Variables de Tema y Estilos Globales (Idénticas a editor.html)
+           ========================================================================== */
+        :root {
+            /* Tema Claro (Default) */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --text-primary: #212529;
+            --text-secondary: #495057;
+            --border-color: #dee2e6;
+            --accent-color: #007bff;
+            --accent-color-hover: #0056b3;
+            --error-color: #dc3545;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="dark"] {
+            /* Tema Oscuro */
+            --bg-primary: #1e1e1e;
+            --bg-secondary: #252526;
+            --text-primary: #d4d4d4;
+            --text-secondary: #cccccc;
+            --border-color: #3e3e42;
+            --accent-color: #0097ff;
+            --accent-color-hover: #007acc;
+            --error-color: #e57373;
+            --shadow-color: rgba(0, 0, 0, 0.25);
+        }
+
+        body, html {
+            height: 100%;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* ==========================================================================
+           2. Estilos de la Caja de Login
+           ========================================================================== */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+
+        .login-form {
+            background: var(--bg-primary);
+            padding: 2.5rem 3rem;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px var(--shadow-color);
+            width: 360px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .login-form h1 {
+            margin: 0 0 2rem 0;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        
+        .login-form .input-group {
+            margin-bottom: 1.25rem;
+            text-align: left;
+        }
+
+        .login-form label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .login-form input {
+            width: 100%;
+            padding: 12px;
+            box-sizing: border-box;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: border-color 0.2s, background-color 0.3s;
+        }
+        
+        .login-form input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+        }
+
+        .login-form button {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease;
+        }
+
+        .login-form button:hover {
+            background-color: var(--accent-color-hover);
+        }
+
+        .login-form .error-message {
+            color: var(--error-color);
+            margin-top: 1rem;
+            height: 20px;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="login-box">
+    <div class="login-container">
+        <form class="login-form" id="login-form">
             <h1>DocuHub</h1>
-            <form id="login-form">
-                <input type="text" id="username" name="username" placeholder="Nombre de usuario" required>
-                <input type="password" id="password" name="password" placeholder="Contraseña" required>
-                <button type="submit">Iniciar Sesión</button>
-            </form>
-            <p id="error-message" class="error"></p>
-        </div>
+            <div class="input-group">
+                <label for="username">Usuario</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="input-group">
+                <label for="password">Contraseña</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit">Iniciar Sesión</button>
+            <p id="error-message" class="error-message"></p>
+        </form>
     </div>
 
     <script>
-        document.getElementById('login-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const username = e.target.username.value;
-            const password = e.target.password.value;
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Aplicar tema guardado al cargar la página ---
+            const savedTheme = localStorage.getItem('docuhub_theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+
+            // --- Lógica del formulario de login ---
+            const loginForm = document.getElementById('login-form');
             const errorElement = document.getElementById('error-message');
-            errorElement.textContent = '';
 
-            // Los datos deben enviarse en un formato de formulario para OAuth2PasswordRequestForm
-            const formData = new URLSearchParams();
-            formData.append('username', username);
-            formData.append('password', password);
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const username = e.target.username.value;
+                const password = e.target.password.value;
+                errorElement.textContent = '';
 
-            try {
-                const response = await fetch('/api/v1/login/access-token', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: formData,
-                });
+                const formData = new URLSearchParams();
+                formData.append('username', username);
+                formData.append('password', password);
 
-                if (response.ok) {
-                    const data = await response.json();
-                    // Guardamos el token en el almacenamiento local del navegador
-                    localStorage.setItem('docuhub_token', data.access_token);
-                    // Redirigimos al editor principal
-                    window.location.href = '/editor';
-                } else {
-                    errorElement.textContent = 'Usuario o contraseña incorrectos.';
+                try {
+                    const response = await fetch('/api/v1/login/access-token', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: formData,
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        localStorage.setItem('docuhub_token', data.access_token);
+                        window.location.href = '/editor';
+                    } else {
+                        const errorData = await response.json();
+                        errorElement.textContent = errorData.detail || 'Usuario o contraseña incorrectos.';
+                    }
+                } catch (error) {
+                    console.error('Error de login:', error);
+                    errorElement.textContent = 'Error de conexión con el servidor.';
                 }
-            } catch (error) {
-                console.error('Error de login:', error);
-                errorElement.textContent = 'Error de conexión con el servidor.';
-            }
+            });
         });
     </script>
 </body>

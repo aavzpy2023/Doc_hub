@@ -28,7 +28,7 @@ async def create_initial_user():
         # Datos del nuevo superusuario
         user_in = schemas.UserCreate(
             username="admin",
-            email="admin@example.com",  # Puedes cambiar este email
+            email="admin@gmail.com",  # Puedes cambiar este email
             password="David*2017",
             is_active=True
         )
