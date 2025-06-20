@@ -15,6 +15,7 @@ services:
     environment:
       - DATABASE_URL=${DATABASE_URL}
       - SECRET_KEY=${SECRET_KEY}
+    restart: unless-stopped
 
   db:
     image: postgres:14-alpine
@@ -29,9 +30,10 @@ services:
       # Comando que Docker ejecutará para comprobar la salud del servicio.
       # pg_isready es una utilidad de PostgreSQL que devuelve 0 si el servidor está listo.
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 5s    # Comprobar cada 5 segundos
-      timeout: 5s     # Esperar 5 segundos por una respuesta
-      retries: 5      # Intentarlo 5 veces antes de marcarlo como 'unhealthy'
+      interval: 5s # Comprobar cada 5 segundos
+      timeout: 5s # Esperar 5 segundos por una respuesta
+      retries: 5 # Intentarlo 5 veces antes de marcarlo como 'unhealthy'
+    restart: unless-stopped
 
   nginx:
     image: nginx:1.21-alpine
@@ -42,6 +44,7 @@ services:
       - docs_build:/var/www/html
     depends_on:
       - app
+    restart: unless-stopped
 
 volumes:
   docs_build:
