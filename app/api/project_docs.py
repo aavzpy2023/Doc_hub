@@ -41,6 +41,9 @@ def get_project_file_tree_recursive(root_dir: str, current_path: str = "") -> Li
             item_path_abs = os.path.join(full_current_path, item)
             item_path_rel = os.path.join(current_path, item) # Ruta relativa a DOCS_SOURCE_DIR
 
+            if item.startswith('.'): # Ignorar archivos/directorios que comienzan con un punto
+                continue
+
             if os.path.isdir(item_path_abs):
                 children = get_project_file_tree_recursive(root_dir, item_path_rel)
                 # Solo incluir directorios si tienen archivos .md o subdirectorios con .md (opcional, para no mostrar vacíos)
