@@ -1,0 +1,14 @@
+/* --- /frontend_react/src/components/ThemeSwitcher/ThemeSwitcher.module.css --- */
+.themeButton {
+    background: none;
+    border: none;
+    font-size: 1.5rem; /* Ajusta según necesidad */
+    cursor: pointer;
+    padding: 0.5rem;
+    color: var(--text-primary); /* Usa variable global */
+    transition: color 0.3s ease;
+}
+
+.themeButton:hover {
+    opacity: 0.8;
+}
