@@ -1,188 +1,102 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DocuHub - Iniciar Sesión</title>
-    <style>
-        /* ==========================================================================
-           1. Variables de Tema y Estilos Globales (Idénticas a editor.html)
-           ========================================================================== */
-        :root {
-            /* Tema Claro (Default) */
-            --bg-primary: #ffffff;
-            --bg-secondary: #f8f9fa;
-            --text-primary: #212529;
-            --text-secondary: #495057;
-            --border-color: #dee2e6;
-            --accent-color: #007bff;
-            --accent-color-hover: #0056b3;
-            --error-color: #dc3545;
-            --shadow-color: rgba(0, 0, 0, 0.1);
-        }
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>DocuHub - Iniciar Sesión</title>
 
-        [data-theme="dark"] {
-            /* Tema Oscuro */
-            --bg-primary: #1e1e1e;
-            --bg-secondary: #252526;
-            --text-primary: #d4d4d4;
-            --text-secondary: #cccccc;
-            --border-color: #3e3e42;
-            --accent-color: #0097ff;
-            --accent-color-hover: #007acc;
-            --error-color: #e57373;
-            --shadow-color: rgba(0, 0, 0, 0.25);
-        }
+        <!-- ESTILOS GLOBALES DE LA APLICACIÓN -->
+        <link rel="stylesheet" href="/static/styles.css" />
+    </head>
+    <body>
+        <div class="login-container">
+            <form class="login-form" id="login-form">
+                <h1>DocuHub</h1>
+                <div class="input-group">
+                    <label for="username">Usuario</label>
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        required
+                        autocomplete="username"
+                    />
+                </div>
+                <div class="input-group">
+                    <label for="password">Contraseña</label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        required
+                        autocomplete="current-password"
+                    />
+                </div>
+                <button type="submit">Iniciar Sesión</button>
+                <p id="error-message" class="error-message"></p>
+            </form>
+        </div>
 
-        body, html {
-            height: 100%;
-            margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: var(--bg-secondary);
-            color: var(--text-primary);
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                // --- Aplicar tema guardado al cargar la página ---
+                const savedTheme =
+                    localStorage.getItem("docuhub_theme") || "light";
+                document.documentElement.setAttribute("data-theme", savedTheme);
 
-        /* ==========================================================================
-           2. Estilos de la Caja de Login
-           ========================================================================== */
-        .login-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100%;
-        }
+                // --- Lógica del formulario de login ---
+                const loginForm = document.getElementById("login-form");
+                const errorElement = document.getElementById("error-message");
 
-        .login-form {
-            background: var(--bg-primary);
-            padding: 2.5rem 3rem;
-            border-radius: 12px;
-            box-shadow: 0 5px 15px var(--shadow-color);
-            width: 360px;
-            text-align: center;
-            border: 1px solid var(--border-color);
-            transition: background-color 0.3s ease, border-color 0.3s ease;
-        }
+                loginForm.addEventListener("submit", async (e) => {
+                    e.preventDefault();
+                    const username = e.target.username.value;
+                    const password = e.target.password.value;
+                    errorElement.textContent = "";
 
-        .login-form h1 {
-            margin: 0 0 2rem 0;
-            color: var(--text-primary);
-            font-weight: 600;
-        }
-        
-        .login-form .input-group {
-            margin-bottom: 1.25rem;
-            text-align: left;
-        }
+                    const formData = new URLSearchParams();
+                    formData.append("username", username);
+                    formData.append("password", password);
 
-        .login-form label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: var(--text-secondary);
-        }
+                    try {
+                        // La ruta de la API de login es absoluta desde la raíz del dominio
+                        const response = await fetch(
+                            "/api/v1/login/access-token",
+                            {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type":
+                                        "application/x-www-form-urlencoded",
+                                },
+                                body: formData,
+                            },
+                        );
 
-        .login-form input {
-            width: 100%;
-            padding: 12px;
-            box-sizing: border-box;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            background-color: var(--bg-secondary);
-            color: var(--text-primary);
-            font-size: 1rem;
-            transition: border-color 0.2s, background-color 0.3s;
-        }
-        
-        .login-form input:focus {
-            outline: none;
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
-        }
-
-        .login-form button {
-            width: 100%;
-            padding: 12px;
-            background-color: var(--accent-color);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 600;
-            transition: background-color 0.2s ease;
-        }
-
-        .login-form button:hover {
-            background-color: var(--accent-color-hover);
-        }
-
-        .login-form .error-message {
-            color: var(--error-color);
-            margin-top: 1rem;
-            height: 20px;
-            font-weight: 500;
-        }
-    </style>
-</head>
-<body>
-    <div class="login-container">
-        <form class="login-form" id="login-form">
-            <h1>DocuHub</h1>
-            <div class="input-group">
-                <label for="username">Usuario</label>
-                <input type="text" id="username" name="username" required>
-            </div>
-            <div class="input-group">
-                <label for="password">Contraseña</label>
-                <input type="password" id="password" name="password" required>
-            </div>
-            <button type="submit">Iniciar Sesión</button>
-            <p id="error-message" class="error-message"></p>
-        </form>
-    </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // --- Aplicar tema guardado al cargar la página ---
-            const savedTheme = localStorage.getItem('docuhub_theme') || 'light';
-            document.documentElement.setAttribute('data-theme', savedTheme);
-
-            // --- Lógica del formulario de login ---
-            const loginForm = document.getElementById('login-form');
-            const errorElement = document.getElementById('error-message');
-
-            loginForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const username = e.target.username.value;
-                const password = e.target.password.value;
-                errorElement.textContent = '';
-
-                const formData = new URLSearchParams();
-                formData.append('username', username);
-                formData.append('password', password);
-
-                try {
-                    const response = await fetch('/api/v1/login/access-token', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: formData,
-                    });
-
-                    if (response.ok) {
-                        const data = await response.json();
-                        localStorage.setItem('docuhub_token', data.access_token);
-                        window.location.href = '/editor';
-                    } else {
-                        const errorData = await response.json();
-                        errorElement.textContent = errorData.detail || 'Usuario o contraseña incorrectos.';
+                        if (response.ok) {
+                            const data = await response.json();
+                            localStorage.setItem(
+                                "docuhub_token",
+                                data.access_token,
+                            );
+                            // Redirigir a la RUTA /editor, que sirve el editor.html
+                            window.location.href = "/editor";
+                        } else {
+                            const errorData = await response
+                                .json()
+                                .catch(() => ({
+                                    detail: "Error al procesar la respuesta del servidor.",
+                                }));
+                            errorElement.textContent =
+                                errorData.detail ||
+                                "Usuario o contraseña incorrectos.";
+                        }
+                    } catch (error) {
+                        console.error("Error de login:", error);
+                        errorElement.textContent =
+                            "Error de conexión. Por favor, inténtelo más tarde.";
                     }
-                } catch (error) {
-                    console.error('Error de login:', error);
-                    errorElement.textContent = 'Error de conexión con el servidor.';
-                }
+                });
             });
-        });
-    </script>
-</body>
+        </script>
+    </body>
 </html>

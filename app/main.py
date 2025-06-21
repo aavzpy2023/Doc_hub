@@ -11,6 +11,7 @@ from app.core.config import settings
 # --- API Routers ---
 # Importamos los routers que creamos en la carpeta /api
 from app.api import login, users, documents
+from app.api import project_docs
 
 # --------------------------------------------------------------------------
 # 1. Creación de las Tablas de la Base de Datos
@@ -36,6 +37,8 @@ app = FastAPI(
 app.include_router(login.router, prefix=f"{settings.API_V1_STR}/login", tags=["Login"])
 app.include_router(users.router, prefix=f"{settings.API_V1_STR}/users", tags=["Users"])
 app.include_router(documents.router, prefix=f"{settings.API_V1_STR}/documents", tags=["Documents"])
+app.include_router(project_docs.router, prefix=f"{settings.API_V1_STR}/project-docs", tags=["Project Docs Editor"])
+
 
 
 # --------------------------------------------------------------------------

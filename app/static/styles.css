@@ -1,4 +1,4 @@
-// --- /styles.css ---
+// --- /app/static/styles.css ---
 
 /* ==========================================================================
    1. Variables de Tema y Estilos Globales
@@ -17,19 +17,9 @@
     --success-color: #28a745;
     --success-color-hover: #218838;
     --disabled-color: #6c757d;
-    --error-color: #dc3545; /* De login.html */
-    --shadow-color: rgba(
-        0,
-        0,
-        0,
-        0.05
-    ); /* Sombra general, ej. para editor-container */
-    --login-shadow-color: rgba(
-        0,
-        0,
-        0,
-        0.1
-    ); /* Sombra específica para login-form */
+    --error-color: #dc3545;
+    --shadow-color: rgba(0, 0, 0, 0.05);
+    --login-shadow-color: rgba(0, 0, 0, 0.1);
     --icon-toolbar-color: #495057;
     --icon-toolbar-color-hover: var(--accent-color);
 }
@@ -48,14 +38,9 @@
     --success-color: #38a95d;
     --success-color-hover: #2c8c4a;
     --disabled-color: #5a5a5a;
-    --error-color: #e57373; /* De login.html */
-    --shadow-color: rgba(0, 0, 0, 0.2); /* Sombra general */
-    --login-shadow-color: rgba(
-        0,
-        0,
-        0,
-        0.25
-    ); /* Sombra específica para login-form */
+    --error-color: #e57373;
+    --shadow-color: rgba(0, 0, 0, 0.2);
+    --login-shadow-color: rgba(0, 0, 0, 0.25);
     --icon-toolbar-color: #b0b0b0;
     --icon-toolbar-color-hover: var(--accent-color);
 }
@@ -67,8 +52,9 @@ html {
     font-family:
         -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
         Arial, sans-serif;
-    height: 100vh; /* Para login-container y app-layout */
-    overflow: hidden; /* Evitar scrollbars innecesarias en el body */
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden; /* CRUCIAL: Evitar scrollbars en body/html */
     background-color: var(--bg-secondary);
     color: var(--text-primary);
     transition:
@@ -81,7 +67,10 @@ html {
    ========================================================================== */
 .app-layout {
     display: flex;
+    flex-direction: row;
     height: 100%;
+    width: 100%;
+    overflow: hidden; /* Contenedor principal no debe tener scroll */
 }
 
 .sidebar {
@@ -93,6 +82,8 @@ html {
     transition:
         background-color 0.3s ease,
         border-color 0.3s ease;
+    flex-shrink: 0;
+    overflow: hidden; /* Sidebar maneja su propio scroll interno si es necesario */
 }
 .sidebar-header {
     padding: 1rem 1.25rem;
@@ -100,6 +91,7 @@ html {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-shrink: 0;
 }
 .sidebar-header h2 {
     margin: 0;
@@ -115,65 +107,135 @@ html {
 }
 .file-tree {
     flex-grow: 1;
-    overflow-y: auto;
+    overflow-y: auto; /* Scroll vertical para el árbol de archivos */
     padding: 0.75rem;
+    min-height: 0;
 }
-.file-tree ul {
-    list-style: none;
-    padding-left: 1rem;
-}
-.file-tree li {
-    padding: 2px 0;
-}
-.file-tree .directory {
-    font-weight: 600;
-    color: var(--text-secondary);
-}
-.file-tree .file {
-    cursor: pointer;
-    display: block;
-    padding: 6px 10px;
-    border-radius: 5px;
-    transition: background-color 0.2s;
-}
-.file-tree .file:hover {
-    background-color: var(--bg-tertiary);
-}
-.file-tree .file.active {
-    background-color: var(--accent-color);
-    color: white;
-    font-weight: 500;
-}
+/* ... (estilos internos de file-tree) ... */
 
 .main-content {
     flex-grow: 1;
-    padding: 1.5rem;
     display: flex;
     flex-direction: column;
+    overflow: hidden; /* Main content no debe tener scroll */
+    padding: 1.5rem;
     gap: 1.5rem;
-    overflow: hidden;
+    box-sizing: border-box;
 }
 
 .editor-container {
     flex-grow: 1;
     display: flex;
+    flex-direction: row;
+    overflow: hidden; /* Editor container no debe tener scroll */
     border: 1px solid var(--border-color);
     border-radius: 8px;
     background-color: var(--bg-primary);
-    box-shadow: 0 4px 12px var(--shadow-color); /* Usa la sombra general */
-    overflow: hidden;
-    transition:
-        background-color 0.3s ease,
-        border-color 0.3s ease;
+    box-shadow: 0 4px 12px var(--shadow-color);
+    min-height: 0;
 }
 
 .editor-pane {
     width: 100%;
+    height: 100%;
     display: flex;
     flex-direction: column;
+    overflow: hidden; /* Editor pane no debe tener scroll */
+    min-height: 0;
     transition: width 0.3s ease;
+    position: relative;
+}
+.editor-container.side-by-side-active .editor-pane {
+    width: 50%;
 }
 
+.EasyMDEContainer {
+    display: flex !important;
+    flex-direction: column !important;
+    flex-grow: 1 !important;
+    min-height: 0;
+    overflow: hidden; /* EasyMDE container no debe tener scroll */
+    position: relative;
+    background-color: var(--bg-primary);
+}
+
+.editor-toolbar {
+    border-bottom: 1px solid var(--border-color) !important;
+    background-color: var(--bg-secondary) !important;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 2;
+}
+/* ... (estilos de botones de la toolbar) ... */
+
+.CodeMirror-wrap {
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+    min-height: 0;
+    overflow: hidden; /* El wrapper de CodeMirror tampoco debe tener scroll */
+}
+
+.CodeMirror {
+    flex-grow: 1 !important;
+    height: 100% !important;
+    min-height: 150px;
+    border: none !important;
+    background-color: var(--bg-primary) !important;
+    color: var(--text-primary) !important;
+    position: relative;
+    z-index: 1;
+    /* CodeMirror internamente maneja el line-wrapping o el scroll horizontal para líneas largas */
+    /* overflow: hidden; ¡No aquí! Debe ser en .CodeMirror-scroll */
+}
+.CodeMirror-scroll {
+    height: 100%;
+    min-height: 150px;
+    overflow: auto !important; /* CLAVE: Permite scroll vertical y horizontal SI ES NECESARIO DENTRO DEL EDITOR */
+}
+
+/* Estilos para paneles de preview internos de EasyMDE (defensivo) */
+.editor-preview,
+.editor-preview-side {
+    background-color: var(--bg-primary) !important;
+    color: var(--text-primary) !important;
+    padding: 1rem 1.5rem;
+    box-sizing: border-box;
+    overflow-y: auto;
+    line-height: 1.7;
+}
+.editor-preview-side {
+    border-left: 1px solid var(--border-color);
+}
+.editor-preview-active-RFiles.markdown-body,
+.editor-preview-side.markdown-body {
+    background-color: var(--bg-primary) !important;
+}
+.editor-preview-active-RFiles.markdown-body p,
+.editor-preview-active-RFiles.markdown-body h1,
+.editor-preview-side.markdown-body p,
+.editor-preview-side.markdown-body h1 {
+    color: var(--text-primary) !important;
+}
+/* ... (más estilos defensivos para el preview de EasyMDE si son necesarios) ... */
+
+.editor-statusbar {
+    flex-shrink: 0;
+    background-color: var(--bg-secondary) !important;
+    border-top: 1px solid var(--border-color) !important;
+    color: var(--text-muted) !important;
+    text-align: right;
+    padding: 2px 4px !important;
+    font-size: 0.8rem;
+    position: relative;
+    z-index: 2;
+}
+.editor-statusbar span {
+    padding: 0 4px !important;
+    margin-left: 8px;
+}
+
+/* Nuestro panel de vista previa personalizado (.preview-pane) */
 .preview-pane {
     width: 0;
     padding: 0;
@@ -185,7 +247,12 @@ html {
         width 0.3s ease,
         padding 0.3s ease;
     display: none;
+    min-height: 0;
+    height: 100%;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
 }
+/* ... (estilos para contenido de .preview-pane que ya tenías, con !important) ... */
 .preview-pane p,
 .preview-pane h1,
 .preview-pane h2,
@@ -195,29 +262,35 @@ html {
 .preview-pane h6,
 .preview-pane li,
 .preview-pane blockquote,
-.preview-pane pre,
-.preview-pane code,
 .preview-pane table {
-    color: var(--text-primary);
+    color: var(--text-primary) !important;
 }
 .preview-pane a {
-    color: var(--accent-color);
+    color: var(--accent-color) !important;
 }
 .preview-pane pre {
-    background-color: var(--bg-tertiary);
+    background-color: var(--bg-tertiary) !important;
+    color: var(--text-primary) !important;
     padding: 1em;
     border-radius: 4px;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--border-color) !important;
+    overflow-x: auto;
 }
-.preview-pane code {
-    background-color: var(--bg-tertiary);
+.preview-pane pre code {
+    background-color: transparent !important;
+    color: inherit !important;
+    padding: 0;
+    border-radius: 0;
+    border: none;
+}
+.preview-pane code:not(pre > code) {
+    background-color: var(--bg-tertiary) !important;
+    color: var(--text-primary) !important;
     padding: 0.2em 0.4em;
     border-radius: 3px;
+    border: 1px solid var(--border-color) !important;
 }
 
-.editor-container.side-by-side-active .editor-pane {
-    width: 50%;
-}
 .editor-container.side-by-side-active .preview-pane {
     display: block;
     width: 50%;
@@ -229,12 +302,9 @@ html {
     text-align: right;
     flex-shrink: 0;
 }
-/* Estilos generales de botones si se necesitan, si no, los botones específicos son suficientes */
-/* button { ... } */
-
+/* ... (estilos de botones y status-message) ... */
 #save-btn,
 #publish-btn {
-    /* Estilos comunes a estos botones si los hay */
     padding: 10px 22px;
     border-radius: 6px;
     border: none;
@@ -267,13 +337,91 @@ html {
     font-style: italic;
 }
 
-/* --- Estilos para el editor EasyMDE --- */
-.CodeMirror {
-    border: none !important;
-    flex-grow: 1 !important;
-    background-color: var(--bg-primary) !important;
-    color: var(--text-primary) !important;
+/* ==========================================================================
+   3. Estilos del Login (DocuHub - Iniciar Sesión)
+   ========================================================================== */
+/* ... (Estilos del login sin cambios, ya que estaban funcionando bien) ... */
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
 }
+.login-form {
+    background: var(--bg-primary);
+    padding: 2.5rem 3rem;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px var(--login-shadow-color);
+    width: 360px;
+    text-align: center;
+    border: 1px solid var(--border-color);
+    transition:
+        background-color 0.3s ease,
+        border-color 0.3s ease,
+        box-shadow 0.3s ease;
+}
+.login-form h1 {
+    margin: 0 0 2rem 0;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+.login-form .input-group {
+    margin-bottom: 1.25rem;
+    text-align: left;
+}
+.login-form label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+.login-form input {
+    width: 100%;
+    padding: 12px;
+    box-sizing: border-box;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition:
+        border-color 0.2s,
+        background-color 0.3s,
+        color 0.3s;
+}
+.login-form input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px
+        color-mix(in srgb, var(--accent-color) 25%, transparent);
+}
+.login-form button {
+    width: 100%;
+    padding: 12px;
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: background-color 0.2s ease;
+    margin-top: 0.5rem;
+}
+.login-form button:hover {
+    background-color: var(--accent-color-hover);
+}
+.login-form .error-message {
+    color: var(--error-color);
+    margin-top: 1rem;
+    height: 20px;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+/* ==========================================================================
+   4. Estilos de Syntax Highlighting para CodeMirror (EasyMDE)
+   ========================================================================== */
 .CodeMirror-cursor {
     border-left-color: var(--text-primary) !important;
 }
@@ -289,40 +437,36 @@ html {
 .cm-s-easymde .cm-def {
     color: var(--text-primary);
 }
-.cm-s-easymde .cm-variable {
-    color: var(--text-primary);
+.cm-s-easymde .cm-variable,
+.cm-s-easymde .cm-operator {
+    color: var(--text-secondary);
 }
 .cm-s-easymde .cm-variable-2 {
-    color: var(--accent-color-hover);
+    color: color-mix(in srgb, var(--accent-color) 80%, var(--text-primary) 20%);
 }
 .cm-s-easymde .cm-variable-3,
 .cm-s-easymde .cm-type {
-    color: var(--accent-color-hover);
+    color: color-mix(in srgb, var(--accent-color) 70%, var(--text-primary) 30%);
 }
 .cm-s-easymde .cm-property {
     color: #f92672;
 }
-.cm-s-easymde .cm-operator {
-    color: var(--text-secondary);
-}
 .cm-s-easymde .cm-comment {
     color: #75715e;
 }
-.cm-s-easymde .cm-string {
-    color: #e6db74;
-}
+.cm-s-easymde .cm-string,
 .cm-s-easymde .cm-string-2 {
     color: #e6db74;
 }
 .cm-s-easymde .cm-meta {
-    color: #555;
+    color: var(--text-muted);
 }
 .cm-s-easymde .cm-error {
-    background: #f92672;
-    color: #f8f8f0;
+    background: var(--error-color);
+    color: var(--bg-primary);
 }
 .cm-s-easymde .cm-qualifier {
-    color: #555;
+    color: var(--text-secondary);
 }
 .cm-s-easymde .cm-builtin {
     color: #66d9ef;
@@ -338,9 +482,11 @@ html {
 }
 .cm-s-easymde .cm-header {
     color: var(--accent-color);
+    font-weight: bold;
 }
 .cm-s-easymde .cm-quote {
     color: #ae81ff;
+    font-style: italic;
 }
 .cm-s-easymde .cm-hr {
     color: var(--border-color);
@@ -348,129 +494,4 @@ html {
 .cm-s-easymde .cm-link {
     color: var(--accent-color);
     text-decoration: underline;
-}
-.cm-s-easymde .cm-negative {
-    color: var(--text-primary);
-}
-.cm-s-easymde .cm-positive {
-    color: var(--text-primary);
-}
-
-.editor-toolbar {
-    border-bottom: 1px solid var(--border-color) !important;
-    background-color: var(--bg-secondary) !important;
-    flex-shrink: 0;
-}
-.editor-toolbar button {
-    color: var(--icon-toolbar-color) !important;
-}
-.editor-toolbar button:hover,
-.editor-toolbar button.active {
-    background-color: var(--bg-tertiary) !important;
-    border-color: var(--accent-color) !important;
-    color: var(--icon-toolbar-color-hover) !important;
-}
-.EasyMDEContainer .CodeMirror-scroll {
-    flex-grow: 1;
-    min-height: 100px;
-}
-.editor-statusbar {
-    flex-shrink: 0;
-    background-color: var(--bg-secondary);
-    border-top: 1px solid var(--border-color);
-    color: var(--text-muted);
-}
-.editor-statusbar span {
-    padding: 2px 8px !important;
-}
-
-/* ==========================================================================
-   3. Estilos del Login (DocuHub - Iniciar Sesión)
-   ========================================================================== */
-.login-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%; /* body/html ya tienen height: 100% */
-}
-
-.login-form {
-    background: var(--bg-primary);
-    padding: 2.5rem 3rem;
-    border-radius: 12px;
-    box-shadow: 0 5px 15px var(--login-shadow-color); /* Usa la variable de sombra específica */
-    width: 360px;
-    text-align: center;
-    border: 1px solid var(--border-color);
-    transition:
-        background-color 0.3s ease,
-        border-color 0.3s ease,
-        box-shadow 0.3s ease;
-}
-
-.login-form h1 {
-    margin: 0 0 2rem 0;
-    color: var(--text-primary);
-    font-weight: 600;
-}
-
-.login-form .input-group {
-    margin-bottom: 1.25rem;
-    text-align: left;
-}
-
-.login-form label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-}
-
-.login-form input {
-    width: 100%;
-    padding: 12px;
-    box-sizing: border-box;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    background-color: var(--bg-secondary); /* Para que coincida con el tema */
-    color: var(--text-primary);
-    font-size: 1rem;
-    transition:
-        border-color 0.2s,
-        background-color 0.3s,
-        color 0.3s;
-}
-
-.login-form input:focus {
-    outline: none;
-    border-color: var(--accent-color);
-    box-shadow: 0 0 0 3px
-        color-mix(in srgb, var(--accent-color) 25%, transparent); /* Usar color-mix para la transparencia del color de acento */
-}
-
-.login-form button {
-    /* Estilo específico para el botón de login */
-    width: 100%;
-    padding: 12px;
-    background-color: var(--accent-color);
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 1rem;
-    font-weight: 600;
-    transition: background-color 0.2s ease;
-    margin-top: 0.5rem; /* Pequeño espacio adicional */
-}
-
-.login-form button:hover {
-    background-color: var(--accent-color-hover);
-}
-
-.login-form .error-message {
-    color: var(--error-color);
-    margin-top: 1rem;
-    height: 20px; /* Para mantener el layout estable */
-    font-weight: 500;
-    font-size: 0.9rem;
 }

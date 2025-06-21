@@ -10,13 +10,13 @@ psycopg2-binary
 
 # Configuración y Validación
 # pydantic[email] instalará pydantic junto con la dependencia 'email-validator'
-pydantic[email] 
+pydantic[email]
 pydantic-settings
 
 # Seguridad y Autenticación
 python-jose[cryptography]
-passlib>=1.7.4     
-bcrypt>=3.2.0  
+passlib>=1.7.4
+bcrypt>=3.2.0
 
 # Documentación
 mkdocs
@@ -25,3 +25,4 @@ PyYAML
 
 # Utilidades (Git)
 GitPython
+aiofiles
