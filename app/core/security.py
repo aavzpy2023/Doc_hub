@@ -1,7 +1,7 @@
 # /app/core/security.py
 
 from datetime import datetime, timedelta
-from typing import Optional, Any
+from typing import Any, Optional
 
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -15,48 +15,48 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # 2. Funciones de Contraseña
 
+
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """
-    Verifica si una contraseña en texto plano coincide con su versión hasheada.
+    Verifies if a plain text password matches its hashed version.
 
     Args:
-        plain_password (str): La contraseña sin hashear.
-        hashed_password (str): La contraseña hasheada desde la base de datos.
+        plain_password (str): The password in plain text.
+        hashed_password (str): The hashed password from the database.
 
     Returns:
-        bool: True si las contraseñas coinciden, False en caso contrario.
+        bool: True if passwords match, False otherwise.
     """
     return pwd_context.verify(plain_password, hashed_password)
 
 
 def get_password_hash(password: str) -> str:
     """
-    Genera el hash de una contraseña en texto plano.
+    Generates a hash for a plain text password.
 
     Args:
-        password (str): La contraseña a hashear.
+        password (str): The password to hash.
 
     Returns:
-        str: La contraseña hasheada.
+        str: The hashed password.
     """
     return pwd_context.hash(password)
 
 
 # 3. Funciones de Token JWT (JSON Web Token)
 
-def create_access_token(
-    subject: Any, expires_delta: Optional[timedelta] = None
-) -> str:
+
+def create_access_token(subject: Any, expires_delta: Optional[timedelta] = None) -> str:
     """
-    Crea un nuevo token de acceso JWT.
+    Creates a new JWT access token.
 
     Args:
-        subject (Any): El sujeto del token (generalmente el ID o username del usuario).
-        expires_delta (Optional[timedelta]): Tiempo de vida del token. Si no se provee,
-                                             se usa el valor de la configuración.
+        subject (Any): The subject of the token (typically the user ID or username).
+        expires_delta (Optional[timedelta]): The lifespan of the token. If not provided,
+                                             the default from settings is used.
 
     Returns:
-        str: El token JWT codificado.
+        str: The encoded JWT token.
     """
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
@@ -64,38 +64,34 @@ def create_access_token(
         expire = datetime.utcnow() + timedelta(
             minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
         )
-    
-    # El 'payload' del token contiene los datos que queremos guardar en él.
-    # 'exp' (expiration) y 'sub' (subject) son claims estándar de JWT.
+
+    # The token 'payload' contains the data we want to store within it.
+    # 'exp' (expiration) and 'sub' (subject) are standard JWT claims.
     to_encode = {"exp": expire, "sub": str(subject)}
-    
+
     encoded_jwt = jwt.encode(
-        claims=to_encode, 
-        key=settings.SECRET_KEY, 
-        algorithm=settings.ALGORITHM
+        claims=to_encode, key=settings.SECRET_KEY, algorithm=settings.ALGORITHM
     )
     return encoded_jwt
 
 
 def decode_token(token: str) -> Optional[str]:
     """
-    Decodifica un token JWT para obtener el 'subject' (ID/username del usuario).
+    Decodes a JWT token to retrieve its 'subject'.
 
     Args:
-        token (str): El token JWT a decodificar.
+        token (str): The JWT token to decode.
 
     Returns:
-        Optional[str]: El 'subject' del token si es válido, None en caso contrario.
+        Optional[str]: The subject of the token if it's valid, otherwise None.
     """
     try:
         payload = jwt.decode(
-            token=token, 
-            key=settings.SECRET_KEY, 
-            algorithms=[settings.ALGORITHM]
+            token=token, key=settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
-        # Extraemos el 'subject' del payload
+        # Extract the 'subject' from payload
         return payload.get("sub")
     except JWTError:
-        # Si el token ha expirado, tiene una firma inválida, etc., jose lanzará un error.
-        # En ese caso, devolvemos None.
+        # If the token has expired, has an invalid signature, etc., jose will raise an error.
+        # In that case, we return None.
         return None

@@ -1,0 +1,41 @@
+Árbol de directorios para los archivos a exportar desde: .
+├── .
+│   ├── .env
+│   ├── Dockerfile
+│   ├── README.md
+│   ├── docker-compose.yml
+│   ├── nginx/
+│   │   ├── nginx.conf
+│   ├── docs/
+│   │   ├── Bi-Versat/
+│   │   │   ├── manual de usuario.md
+│   │   ├── Versat/
+│   │   │   ├── Configuración/
+│   │   │   │   ├── manual de usuario.md
+│   ├── app/
+│   │   ├── initial_data.py
+│   │   ├── main.py
+│   │   ├── requirements.txt
+│   │   ├── db/
+│   │   │   ├── __init__.py
+│   │   │   ├── database.py
+│   │   │   ├── models.py
+│   │   │   ├── schemas.py
+│   │   ├── api/
+│   │   │   ├── __init__.py
+│   │   │   ├── dependencies.py
+│   │   │   ├── documents.py
+│   │   │   ├── login.py
+│   │   │   ├── project_docs.py
+│   │   │   ├── users.py
+│   │   ├── services/
+│   │   │   ├── __init__.py
+│   │   │   ├── document_service.py
+│   │   │   ├── user_service.py
+│   │   ├── static/
+│   │   │   ├── editor.html
+│   │   │   ├── login.html
+│   │   ├── core/
+│   │   │   ├── __init__.py
+│   │   │   ├── config.py
+│   │   │   ├── security.py
