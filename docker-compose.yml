@@ -1,59 +1,72 @@
 services:
-  # --- Backend of the app (FastAPI) ---
+  # --- Backend API Service (FastAPI) ---
   app:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: docuhub_app
+    container_name: docuhub_backend
+    # Ensures this service starts only after the database is healthy.
     depends_on:
       db:
         condition: service_healthy
     volumes:
+      # Mounts local source code for live-reloading during development.
       - ./backend/app:/code/app
       - ./backend/docs:/docs_source
+      # Named volume for the generated static site, shared with Nginx.
       - docs_build:/docs_build
     env_file: .env
+    # Exposes the port internally to the Docker network for Nginx to connect.
     expose:
       - "8000"
     networks:
-      - app-network
+      - docuhub-net
     restart: unless-stopped
 
-  # --- (PostgreSQL) ---
+  # --- Database Service (PostgreSQL) ---
   db:
     image: postgres:14-alpine
-    container_name: docuhub_db
+    container_name: docuhub_database
     volumes:
+      # Named volume for persistent database storage.
       - postgres_data:/var/lib/postgresql/data/
     env_file: .env
+    # Healthcheck ensures other services wait until the DB is ready to accept connections.
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGROS_USER} -d ${POSTGROS_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5
     networks:
-      - app-network
+      - docuhub-net
     restart: unless-stopped
 
-  # --- Reverse Proxy (Nginx) ---
+  # --- Reverse Proxy & Frontend Server (Nginx) ---
   nginx:
     image: nginx:1.21-alpine
-    container_name: docuhub_nginx
+    container_name: docuhub_proxy
+    # Maps the host's port 8080 to the container's port 80.
     ports:
       - "8080:80"
     volumes:
+      # Mounts the Nginx configuration file.
       - ./proxy/nginx.conf:/etc/nginx/conf.d/default.conf
-      - docs_build:/var/www/html
+      # Mounts the frontend static files (HTML, CSS, JS).
+      - ./frontend:/var/www/frontend
+      # Shares the volume for the generated MkDocs site.
+      - docs_build:/var/www/docs
     depends_on:
       - app
     networks:
-      - app-network
+      - docuhub-net
     restart: unless-stopped
 
+# Define the shared network for inter-service communication.
 networks:
-  app-network:
+  docuhub-net:
     driver: bridge
 
+# Define named volumes for data persistence.
 volumes:
   docs_build:
   postgres_data:

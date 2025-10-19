@@ -1,24 +1,37 @@
-from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
-
 from app.api import documents, login, project_docs, users
 from app.core.config import settings
 from app.db import models
 
 # Application imports
 from app.db.database import engine
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 # --- 1. Database Table Creation ---
 # SQLAlchemy uses the imported models to create tables if they do not exist.
 # It is crucial to import 'models' so that Base.metadata becomes aware of them.
 models.Base.metadata.create_all(bind=engine)
 
+origins = [
+    "http://localhost",
+    "http://localhost:8080",  # The port of frontend
+    # "https://your-domine.com",
+]
+
 # --- 2. FastAPI Application Instance Creation ---
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.PROJECT_VERSION,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
+)
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # --- 3. API Router Inclusion ---
@@ -34,22 +47,3 @@ app.include_router(
     prefix=f"{settings.API_V1_STR}/project-docs",
     tags=["Project Docs Editor"],
 )
-
-# --- 4. Serve Basic Frontend ---
-# Mounts static files (CSS, JS) for the frontend.
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
-
-
-@app.get("/login", response_class=HTMLResponse, tags=["Frontend"])
-async def read_login_page():
-    """Serves the login page."""
-    with open("app/static/login.html") as f:
-        return HTMLResponse(content=f.read())
-
-
-@app.get("/", response_class=HTMLResponse, tags=["Frontend"])
-@app.get("/editor", response_class=HTMLResponse, tags=["Frontend"])
-async def read_editor_page():
-    """Serves the main Markdown editor page."""
-    with open("app/static/editor.html") as f:
-        return HTMLResponse(content=f.read())
