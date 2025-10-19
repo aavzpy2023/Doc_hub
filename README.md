@@ -2,32 +2,34 @@
 
 ![Python](https://img.shields.io/badge/Python-3.11-blue.svg) ![FastAPI](https://img.shields.io/badge/FastAPI-0.103-green.svg) ![Docker](https://img.shields.io/badge/Docker-Compose-blue.svg) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14-lightgrey.svg)
 
-Doc_hub is a comprehensive web platform for creating, managing, and publishing technical documentation using Markdown. The application is built on a modern tech stack (FastAPI, PostgreSQL, Nginx), fully containerized with Docker, and provides a robust system for automatic version control of every change using Git.
+Doc_hub is a comprehensive web platform for creating, managing, and publishing technical documentation using Markdown. The application is built on a modern tech stack (FastAPI, PostgreSQL, Nginx), follows a professional modular architecture, and is fully containerized with Docker. It provides a robust system for automatic version control of every change using Git.
 
 ## Core Features
 
-* **Web-Based Markdown Editor:** A rich user interface for writing and previewing Markdown documents directly in the browser (powered by EasyMDE).
+* **Web-Based Markdown Editor:** A rich user interface for writing and previewing Markdown documents (powered by EasyMDE).
 * **Automatic Git Versioning:** Every document save triggers a Git commit, providing a complete and auditable change history.
 * **User Authentication:** Secure login system based on JWT (OAuth2) with user and admin roles.
-* **Static Site Generation:** With a single click, administrators can build and publish a navigable static documentation website using **MkDocs**.
+* **Static Site Generation:** Administrators can build and publish a navigable static documentation website using **MkDocs** with a single click.
 * **PDF Export:** Generate high-quality PDFs from any Markdown document on the fly using **Pandoc**.
-* **Robust & Scalable Architecture:** Deployed with Docker Compose, using Nginx as a reverse proxy for the FastAPI backend and for serving the generated static site.
+* **Robust & Scalable Architecture:** Deployed with Docker Compose, using Nginx as a reverse proxy and following a clean, service-oriented structure.
 
 ## The Problem It Solves
 
-Development and QA teams need a "single source of truth" for their documentation (user manuals, API guides, testing procedures). Doc_hub centralizes this process, ensuring that all documentation is organized, easy to edit, and version-controlled, thus eliminating the chaos of scattered Word files and outdated versions.
+Development and QA teams need a "single source of truth" for their documentation (user manuals, API guides, testing procedures). Doc_hub centralizes this process, ensuring all documentation is organized, easy to edit, and version-controlled, thus eliminating the chaos of scattered files and outdated versions.
 
 ## Technology Architecture
 
-The system follows a microservices-oriented architecture orchestrated by Docker Compose:
+The system follows a modular, service-oriented architecture orchestrated by Docker Compose. Each component is encapsulated in its own directory, reflecting a clean separation of concerns:
 
-1. **`nginx` (Reverse Proxy):** The entry point. It routes traffic to the FastAPI application and serves the static MkDocs site.
-2. **`app` (FastAPI Backend):** The application's brain. It manages the API, business logic, authentication, Git interactions, and document generation (PDF/Website).
-3. **`db` (Database):** A PostgreSQL instance that stores user data, comments, and document locks.
+1. **`/proxy` (Nginx Reverse Proxy):** The single entry point for all traffic. It intelligently routes requests to the backend API and efficiently serves the generated static documentation site.
+2. **`/backend` (FastAPI Application):** The application's brain. This service contains all the business logic, API endpoints (`/api`), user authentication, Git interactions, and document generation tasks (PDF/Website).
+3. **Database (PostgreSQL):** A dedicated PostgreSQL container that stores persistent data such as users, document locks, and comments.
+
+---
 
 ## Project Status & Roadmap
 
-This project is currently **under active development**. The core functionalities described above are implemented and operational. However, this is a live project with a clear vision for future enhancements.
+This project is currently **under active development**. The core functionalities are implemented and operational.
 
 ### Current Status
 
@@ -37,15 +39,18 @@ This project is currently **under active development**. The core functionalities
 * [x] Automatic Git versioning on every save.
 * [x] Static site generation with MkDocs.
 * [x] On-the-fly PDF export with Pandoc.
-* [x] Fully containerized with Docker Compose for easy deployment.
+* [x] Fully containerized with a professional modular architecture.
 
 ### Future Roadmap
 
-* **Document Locking:** Implement a real-time document locking system to prevent simultaneous edits by different users. The database model (`DocumentLock`) is already in place.
-* **Commenting System:** Develop a commenting feature per document, allowing for collaborative review. The database models (`Comment`, `User`) are designed to support this.
-* **Full-Text Search:** Integrate a search engine (e.g., Elasticsearch or Whoosh) to allow for powerful full-text searching across all documents.
-* **CI/CD Pipeline:** Create a CI/CD pipeline (e.g., with GitHub Actions) to automate testing and deployment.
-* **Enhanced User Roles & Permissions:** Develop a more granular permission system (e.g., read, write, admin per project/directory).
+* **[ ] Document Locking:** Implement a real-time locking system to prevent simultaneous edits.
+
+* **[ ] Commenting System:** Develop a commenting feature per document for collaborative review.
+* **[ ] Full-Text Search:** Integrate a search engine (e.g., Elasticsearch) for powerful searching across all documents.
+* **[ ] CI/CD Pipeline:** Create a GitHub Actions workflow to automate testing and deployment.
+* **[ ] Enhanced Permissions:** Develop a more granular permission system (e.g., read/write per directory).
+
+---
 
 ## Getting Started
 
@@ -56,42 +61,42 @@ This project is currently **under active development**. The core functionalities
 
 ### Installation & Launch
 
-1. **Clone the repository:**
+1. **Clone the Repository:**
 
     ```bash
     git clone [YOUR-REPOSITORY-URL]
     cd Doc_hub
     ```
 
-2. **Create the environment file:**
-    Copy the `.env.example` file (if you create one) to `.env` and customize the variables. Make sure to change the `SECRET_KEY`.
+2. **Create the Environment File:**
+    The project uses a `.env` file in the root directory for configuration. A template is provided.
 
     ```bash
-    # Example .env
-    POSTGRES_USER=postgres
-    POSTGRES_PASSWORD=postgres
-    POSTGRES_DB=docuhub_db
-    POSTGRES_HOST=db
-    POSTGRES_PORT=5432
-    DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
-    SECRET_KEY=YOUR_RANDOMLY_GENERATED_SECRET_KEY
+    cp .env.example .env
     ```
 
-3. **Build and run the containers:**
+    Now, edit the `.env` file and customize the variables. **It is critical to generate a new `SECRET_KEY`**. You can generate one with `openssl rand -hex 32`.
+
+3. **Build and Run the Containers:**
+    This command will build the images for each service and start them in detached mode.
 
     ```bash
     docker-compose up -d --build
     ```
 
-4. **Create the initial admin user:**
-    The system is designed for a script to create the `admin` user on first run. If you need to do it manually:
+4. **Create the Initial Admin User:**
+    After the containers are up and running, execute the initial data script inside the `app` container.
 
     ```bash
     docker-compose exec app python app/initial_data.py
     ```
 
     *Default User:* `admin`
-    *Default Password:* `David*2017` (Change in production!)
+    *Default Password:* `DocHub*2025` (This should be changed in a production environment!)
 
-5. **Access the application:**
+5. **Access the Application:**
     Open your browser and navigate to `http://localhost:8080/login`.
+
+## License
+
+This project is licensed under the MIT License. See the `LICENSE` file for details.
